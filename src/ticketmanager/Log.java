@@ -71,16 +71,44 @@ public class Log {
 		signinCheckUp(mail,password,InformationSet.details);
 	}
 	static void signinCheckUp(String mail,String password,ArrayList<InformationCentre> userDetail) {
-		for(int i=0;i<userDetail.size();i++) {
-			InformationCentre particularCustomer=userDetail.get(i);
-			if(mail.equals(particularCustomer.mailId)) {
-				if(password.equals(particularCustomer.password)) {
-					System.out.println("Ready to book !");
-					currentMailId=mail;
-					currentIndex=i;
-					Display.userDisplay();
+		boolean mailCheck=false,passwordCheck=false;
+		try {
+			Connection connect=DriverManager.getConnection(InformationSet.url, InformationSet.userName, InformationSet.password);
+			Statement st=connect.createStatement();
+			ResultSet result=st.executeQuery("select email from log");
+			while(result.next()) {
+				String originalMail=result.getString(1);
+				if(originalMail.equals(mail)) {
+					mailCheck=true;
+					break;
 				}
 			}
+			connect.close();
+			if(mailCheck) {
+				Connection connect2=DriverManager.getConnection(InformationSet.url, InformationSet.userName, InformationSet.password);
+				PreparedStatement statement=connect2.prepareStatement("select currentpassword from log where email=?");
+				statement.setString(1, mail);
+				ResultSet result2=statement.executeQuery();
+				while(result2.next()) {
+					String originalPassword=result2.getString(1);
+					if(originalPassword.equals(password)) {
+						passwordCheck=true;
+						break;
+					}
+				}
+			}
+			else {
+				System.out.println("Given mail id is not valid");
+			}
+
+			if(mailCheck && passwordCheck) {
+				Display.userDisplay();
+			}
+			else {
+				System.out.println("Given password id is not valid");
+			}
+		}catch(Exception e) {
+			System.out.println();
 		}
 	}
 	static void passwordChanger() {

@@ -15,32 +15,24 @@ class InformationSet{
 	static ArrayList<InformationCentre> details=new ArrayList<>();
 	static Scanner scanner=new Scanner(System.in);
 	static void intialAdminIN(){
-		InformationCentre personDetail=new InformationCentre();
-		personDetail.name="kiruba";
-		personDetail.age=25;
-		personDetail.mailId="kiruba2000@gmail.com";
-		personDetail.password="Kiruba2@00";
-		details.add(personDetail);
-		//sql connection 
 		Connection connect=null;
 		try {
 			connect=DriverManager.getConnection(url, userName, password);
 			PreparedStatement st=connect.prepareStatement("insert into log(userName, currentpassword, age, email, QA) values(?,?,?,?,?)");
-			//st.setInt(1, 1);
-			st.setString(1,personDetail.name);
-			st.setString(2,personDetail.password);
-			st.setInt(3, personDetail.age);
-			st.setString(4,personDetail.mailId);
-			st.setString(5, "god");
+			st.setString(1,"kiruba");
+			st.setString(2,"Kiruba2@00");
+			st.setInt(3, 25);
+			st.setString(4,"kiruba2000@gmail.com");
+			st.setString(5, "root");
 			st.executeUpdate();
 		} catch (SQLException e) {
-			//System.out.println("error from data base connection:"+e);
+			System.out.println();
 		}finally {
 			if(connect!=null) {
 				try {
 					connect.close();
 				} catch (SQLException e) {
-					System.out.println("error in close!");
+					e.printStackTrace();
 				}
 			}
 		}
@@ -62,7 +54,6 @@ class InformationSet{
 			informationSetter();
 		}
 		personDetail.password=Log.passwordGetter();
-		details.add(personDetail);
 		Connection connect=null;
 		try {
 			connect=DriverManager.getConnection(url, userName, password);
@@ -89,16 +80,45 @@ class InformationSet{
 			System.out.print("Enter mailId:");
 			String mail=scanner.nextLine();
 			System.out.print("Enter your Password:");
-			String password=scanner.nextLine();
-			for(int i=0;i<details.size();i++) {
-				InformationCentre particularCustomer=details.get(i);
-				if(mail.equals(particularCustomer.mailId)) {
-					if(password.equals(particularCustomer.password)) {
-						Display.adminOption();
+			String givenPassword=scanner.nextLine();
+			boolean mailCheck=false,passwordCheck=false;
+			try {
+				Connection connect=DriverManager.getConnection(InformationSet.url, InformationSet.userName, InformationSet.password);
+				Statement st=connect.createStatement();
+				ResultSet result=st.executeQuery("select email from log");
+				while(result.next()) {
+					String originalMail=result.getString(1);
+					if(originalMail.equals(mail)) {
+						mailCheck=true;
 						break;
 					}
 				}
+				connect.close();
+				if(mailCheck) {
+					Connection connect2=DriverManager.getConnection(InformationSet.url, InformationSet.userName, InformationSet.password);
+					PreparedStatement statement=connect2.prepareStatement("select currentpassword from log where email=?");
+					statement.setString(1, mail);
+					ResultSet result2=statement.executeQuery();
+					while(result2.next()) {
+						String originalPassword=result2.getString(1);
+						if(originalPassword.equals(givenPassword)) {
+							passwordCheck=true;
+							break;
+						}
+					}
+				}
+				else {
+					System.out.println("Given mail id is not valid");
+				}
+
+				if(mailCheck && passwordCheck) {
+					Display.adminOption();
+				}
+				else {
+					System.out.println("Given password id is not valid");
+				}
+			}catch(Exception e) {
+				System.out.println();
 			}
-			System.out.println("Invalid!-Name or Password");
 	}
 }
